@@ -6,6 +6,7 @@ Run outside the grader container with MAKEFUN_OUTPUT_DIR set, e.g.
 """
 
 import os
+import re
 from pathlib import Path
 
 # The story is a literal on purpose: the grader runs the program twice and
@@ -28,6 +29,14 @@ STORY = (
 
 
 def main() -> None:
+    # Self-check against the sealed gate before writing: the entry must be
+    # UTF-8 text of 1 to 400 characters, not only white space, in exactly
+    # two sentences. Failing loudly here beats shipping an invalid entry.
+    if not 1 <= len(STORY) <= 400 or not STORY.strip():
+        raise ValueError("story fails the gate: not 1-400 non-blank characters")
+    sentences = [s for s in re.split(r"(?<=[.!?])\s+", STORY.strip()) if s]
+    if len(sentences) != 2:
+        raise ValueError("story fails the gate: not exactly two sentences")
     output_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "entry.txt").write_text(STORY, encoding="utf-8")
